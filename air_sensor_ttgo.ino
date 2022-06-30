@@ -202,14 +202,23 @@ void loop() {
   Serial.println(counter);
   // send data to influxdb
   if (counter == 5) {
-    sprintf(ob, "air temperature=%.1f,pressure=%.1f,humidity=%.1f,co2=%.0f\n", temperature, pressure_sealevel, humidity, co2);
-    influx_send_data(ob);
+    if (humidity > 0 && co2 > 100 && co2 < 1e6) {
+      // only send values that make sense
+      sprintf(ob, "air temperature=%.1f,pressure=%.1f,humidity=%.1f,co2=%.0f\n", temperature, pressure_sealevel, humidity, co2);
+      influx_send_data(ob);
+    }
+    else {
+      Serial.println("Not sending bad values");
+    }
   }
   else if (counter > 30) {
     counter = 0;
   }
   counter += 1;
+
   
+  Serial.println("");
+
   delay(2000);
   // pinMode(4, OUTPUT);
   // digitalWrite(4, LOW); switch off backlight
