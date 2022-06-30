@@ -67,6 +67,9 @@ void setup() {
   Serial.begin(115200);
   while ( !Serial ) delay(100);   // wait for native usb
 
+  char config_ap_psk[16];
+  sprintf(config_ap_psk, "%i", random(1000000, 99999999));
+  
   // display init
   tft.init();
   tft.fillScreen(TFT_BLACK);
@@ -87,7 +90,7 @@ void setup() {
   wifiManager.setSaveConfigCallback(save_config_callback);
   WiFiManagerParameter wmp_influxdb_url("influxdb_url", "InfluxDB Submit URL", influxdb_url.c_str(), 128);
   WiFiManagerParameter wmp_influxdb_user("influxdb_user", "InfluxDB User", influxdb_user.c_str(), 64);
-  WiFiManagerParameter wmp_influxdb_pass("influxdb_pass", "InfluxDB Pass", influxdb_pass.c_str(), 64);
+  WiFiManagerParameter wmp_influxdb_pass("influxdb_pass", "InfluxDB Pass", "[redacted]", 64);
   wifiManager.addParameter(&wmp_influxdb_url);
   wifiManager.addParameter(&wmp_influxdb_user);
   wifiManager.addParameter(&wmp_influxdb_pass);
@@ -97,9 +100,10 @@ void setup() {
     tft.println("DONE");
   }
 
+  Serial.printf("CFG AP PSK: %s\n", config_ap_psk);
+  tft.printf("CFG AP PSK: %s\n", config_ap_psk);
   tft.print("Init WIFI... ");
-
-  if(!wifiManager.autoConnect("air_sensor_ttgo")) {
+  if(!wifiManager.autoConnect("air_sensor_ttgo autoAP", config_ap_psk)) {
     tft.println("Error");
   }
   tft.println("DONE");
@@ -107,7 +111,12 @@ void setup() {
   if(should_save_config) {
     influxdb_url = wmp_influxdb_url.getValue();
     influxdb_user = wmp_influxdb_user.getValue();
-    influxdb_pass = wmp_influxdb_pass.getValue();
+    if (wmp_influxdb_pass.getValue() != "[redacted]") {
+      Serial.print("Saving value for influxdb_pass: '");
+      Serial.print(wmp_influxdb_pass.getValue());
+      Serial.println("'");
+      influxdb_pass = wmp_influxdb_pass.getValue();
+    }
     do_save_config();
   }
 
@@ -186,14 +195,12 @@ void loop() {
   sprintf(ob, "CO2 level: %.0f ppm", co2);
   Serial.println(ob);
   tft.println(ob);
-  
-  Serial.println("");
 
   // reconnect WiFi.localIP()
   if (WiFi.status() != WL_CONNECTED) {
     tft.println("\n\n\nWIFI DISCONNECT\n\n-> Resetting...");
     Serial.println("WIFI DISCONNECT --> Resetting...");
-    delay(2000);
+    delay(4000);
     // reset on wifi disconnect
     ESP.restart();
   }
