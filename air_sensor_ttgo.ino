@@ -165,6 +165,7 @@ void setup() {
     //  1    0.25°C      65 ms
     //  2    0.125°C     130 ms
     //  3    0.0625°C    250 ms
+    mcp9808.wake();
     tft.println("DONE");
   }
   
@@ -177,9 +178,9 @@ void loop() {
   float temperature, pressure_sealevel, humidity, co2;
 
   //temperature = bmp.readTemperature();
-  mcp9808.wake();
+  //mcp9808.wake();
   temperature = mcp9808.readTempC();
-  mcp9808.shutdown();
+  //mcp9808.shutdown();
   pressure_sealevel = bmp.readPressure()/100 + 38; // nuernberg is 38mBar above sea level
 
   if (scd30.dataReady()) {  
