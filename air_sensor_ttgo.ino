@@ -7,6 +7,8 @@
 
 #include <Adafruit_BMP280.h>
 #include <Adafruit_SCD30.h>
+#include <Adafruit_MCP9808.h>
+
 
 #include <WiFiManager.h>       // https://github.com/tzapu/WiFiManager WiFi Configuration Magic
 #include <Preferences.h>
@@ -18,6 +20,7 @@ TFT_eSPI tft = TFT_eSPI();
 
 Adafruit_BMP280 bmp; // I2C
 Adafruit_SCD30  scd30; // I2C
+Adafruit_MCP9808 mcp9808; // I2C
 
 WiFiManager wifiManager;
 Preferences preferences;
@@ -148,6 +151,22 @@ void setup() {
   scd30.setTemperatureOffset(80); // 0.8*C x 100
   scd30.startContinuousMeasurement(bmp.readPressure()/100);
   tft.println("DONE");
+
+  // MCP9808 init
+  tft.print("Init MCP9808... ");
+  if (!mcp9808.begin()) {
+    Serial.println("Failed to find MCP9808 chip");
+    tft.println("Error");
+  }
+  else {
+    mcp9808.setResolution(3);
+    // Mode Resolution SampleTime
+    //  0    0.5°C       30 ms
+    //  1    0.25°C      65 ms
+    //  2    0.125°C     130 ms
+    //  3    0.0625°C    250 ms
+    tft.println("DONE");
+  }
   
   delay(2000);
 }
@@ -157,7 +176,10 @@ void loop() {
   char ob[128];
   float temperature, pressure_sealevel, humidity, co2;
 
-  temperature = bmp.readTemperature();
+  //temperature = bmp.readTemperature();
+  mcp9808.wake();
+  temperature = mcp9808.readTempC();
+  mcp9808.shutdown();
   pressure_sealevel = bmp.readPressure()/100 + 38; // nuernberg is 38mBar above sea level
 
   if (scd30.dataReady()) {  
