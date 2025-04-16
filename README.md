@@ -1,3 +1,6 @@
+> [!WARNING]
+> Moved to https://codeberg.org/asdil12/air_sensor_ttgo
+
 Open `~/Arduino/libraries/TFT_eSPI/User_Setup_Select.h`
 
 Comment out:
